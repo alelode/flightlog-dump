@@ -1,0 +1,25 @@
+{
+  "name": "flightlog-dump",
+  "version": "1.0.0",
+  "description": "Dumping flightlog.org to a sql db",
+  "main": "start.ts",
+  "dependencies": {
+    "http": "^0.0.0",
+    "jsdom": "^13.0.0",
+    "string-to-dom": "^0.1.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alelode/flightlog-dump.git"
+  },
+  "author": "Aleksander Lode",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alelode/flightlog-dump/issues"
+  },
+  "homepage": "https://github.com/alelode/flightlog-dump#readme"
+}
