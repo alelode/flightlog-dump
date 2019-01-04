@@ -4,8 +4,10 @@
   "description": "Dumping flightlog.org to a sql db",
   "main": "start.ts",
   "dependencies": {
+    "@types/node": "^10.12.18",
     "http": "^0.0.0",
     "jsdom": "^13.0.0",
+    "sqlite3": "^4.0.4",
     "string-to-dom": "^0.1.5"
   },
   "devDependencies": {},
