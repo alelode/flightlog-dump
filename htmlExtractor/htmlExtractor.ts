@@ -1,5 +1,5 @@
 import { JSDOM } from "jsdom";
-import { Flight, Pilot } from "../types";
+import { Flight, Pilot, Club } from "../types";
 
 export function extractFlightUrls(html: string): string[] {
   const dom = new JSDOM(html);
@@ -46,7 +46,7 @@ export function extractPilots(html: string): string[] {
   return links;
 }
 
-export function extractClub(html: string) {
+export function extractClub(html: string, clubId: number): Club {
   const dom = new JSDOM(html);
 
   let arr: Element[] = Array.prototype.slice
@@ -56,21 +56,25 @@ export function extractClub(html: string) {
     });
 
   if (arr.length === 4) {
-    return arr[3].textContent;
+    return {
+      id: clubId,
+      name: arr[3].textContent
+    };
   } else {
     throw "Could not fetch club name";
   }
 }
 
-export function extractPilot(html: string) {
+export function extractPilot(html: string, id: number): Pilot {
   const dom = new JSDOM(html);
 
   let pilot: Pilot = {
+    id: id,
     name: "",
     club: "",
     country: 0,
     license: "",
-    wings: []
+    wings: ""
   };
 
   let rawInfo: Element = Array.prototype.slice
@@ -85,33 +89,39 @@ export function extractPilot(html: string) {
     let pilotInfo: string[] = rawInfo.innerHTML.split("<br>");
     pilot.name = pilotInfo[0];
 
-    let countryId = pilotInfo.filter(p => p.indexOf("country_id") > 0)
-      ? pilotInfo
-          .filter(p => p.indexOf("country_id") > 0)[0]
-          .split("country_id=")[1]
-          .split('"')[0]
-      : "0";
+    if (pilot.name.length === 0) {
+      return null;
+    }
+
+    let countryId =
+      pilotInfo.filter(p => p.indexOf("country_id=") > 0).length > 0
+        ? pilotInfo
+            .filter(p => p.indexOf("country_id=") > 0)[0]
+            .split("country_id=")[1]
+            .split('"')[0]
+        : "0";
 
     pilot.country = parseInt(countryId);
 
-    pilot.club = pilotInfo.filter(p => p.indexOf("club_id") > 0)
-      ? pilotInfo
-          .filter(p => p.indexOf("club_id") > 0)[0]
-          .split(">")[1]
-          .split("<")[0]
-      : "";
+    pilot.club =
+      pilotInfo.filter(p => p.indexOf("club_id") > 0).length > 0
+        ? pilotInfo
+            .filter(p => p.indexOf("club_id") > 0)[0]
+            .split(">")[1]
+            .split("<")[0]
+        : "";
 
-    let license = pilotInfo.filter(p => p.indexOf("IPPI") > -1)
-      ? pilotInfo.filter(p => p.indexOf("IPPI") > -1)[0]
-      : null;
+    let license =
+      pilotInfo.filter(p => p.indexOf("IPPI") > -1).length > 0
+        ? pilotInfo.filter(p => p.indexOf("IPPI") > -1)[0]
+        : null;
 
     pilot.license = license ? license : "";
 
     if (license) {
-      pilot.wings = pilotInfo.slice(
-        pilotInfo.indexOf(license) + 1,
-        pilotInfo.length
-      );
+      pilot.wings = pilotInfo
+        .slice(pilotInfo.indexOf(license) + 1, pilotInfo.length)
+        .join(",");
     }
   } else {
     console.log("Error: Could not find pilot info");
@@ -128,7 +138,7 @@ function getRowData(row: Element) {
   return row.children[1].textContent.trim();
 }
 
-export function extractFlight(html: string) {
+export function extractFlight(html: string, id: number): Flight {
   try {
     const dom = new JSDOM(html);
 
@@ -139,22 +149,43 @@ export function extractFlight(html: string) {
           table.hasAttribute("cellpadding") &&
           table.getAttribute("cellpadding") === "5"
       );
+
+    if (!table) {
+      return null;
+    }
+
     let arr: Element[] = Array.prototype.slice
       .call(table.children[0].children)
       .filter((row: Element) => {
         return row.children && row.children.length === 2;
       });
 
+    var pilotIdString =
+      html.indexOf("user_id=") > 0
+        ? html.split("user_id=")[1].split("'")[0]
+        : "0";
+
+    var trackloglink = "";
+    if (html.indexOf("'>Tracklog in Google Earth") > -1) {
+      var current = html.split("'>Tracklog in Google Earth")[0];
+      current = current.split("rqtid=19&trip_id=" + id + "&")[1];
+      trackloglink =
+        "https://flightlog.org/fl.html?rqtid=19&trip_id=" + id + "&" + current;
+    }
+
     return {
-      Date: getRowData(arr[0]),
-      Country: getRowData(arr[1]),
-      Takeoff: getRowData(arr[2]),
-      Glider: getRowData(arr[3]),
-      Duration: getRowData(arr[4]),
-      Distance: getRowData(arr[5]),
-      MaxAltitude: getRowData(arr[6]),
-      Description: getRowData(arr[7]),
-      OpenDistance: getRowData(arr[9]).split("Distance: ")[1]
+      id: id,
+      pilotid: parseInt(pilotIdString),
+      date: getRowData(arr[0]),
+      country: getRowData(arr[1]),
+      takeoff: getRowData(arr[2]),
+      glider: getRowData(arr[3]),
+      duration: getRowData(arr[4]),
+      distance: getRowData(arr[5]),
+      maxaltitude: parseInt(getRowData(arr[6]).split(" m")[0]),
+      description: getRowData(arr[7]),
+      opendistance: getRowData(arr[9]).split("Distance: ")[1],
+      trackloglink: trackloglink
     };
   } catch (e) {
     console.log(e);

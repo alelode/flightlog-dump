@@ -1,25 +1,30 @@
 export interface Flight {
+  id: number;
+  pilotid: number;
   date: string;
   country: string;
   takeoff: string;
   glider: string;
   duration: string;
   distance: string;
-  maxaltitude: string;
+  maxaltitude: number;
   description: string;
   opendistance: string;
+  trackloglink: string;
 }
 
 export interface Club {
   name: string;
+  id: number;
 }
 
 export interface Pilot {
+  id: number;
   name: string;
   country: number;
   club: string;
   license: string;
-  wings: string[];
+  wings: string;
 }
 
 // export interface Wing {
