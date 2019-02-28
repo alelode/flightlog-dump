@@ -4,33 +4,38 @@ import Database from "../db/database";
 import { Club } from "../types";
 import * as readline from "readline";
 
-const MAX = 90;
-
-let clubId = 1;
+let insertCount = 0;
+var failedStreak = 0;
 const BASEURL = "https://flightlog.org/";
 
 let allClubs: Club[] = [];
 
-export async function dumpClubs(db: Database, done: Function) {
+export async function dumpClubs(db: Database, clubId: number, done: Function) {
   const page = "fl.html?l=1&a=26&club_id=" + clubId;
   let html = await getHtml(BASEURL + page);
-  allClubs.push(extractClub(html, clubId));
+  var club = extractClub(html, clubId);
 
-  if (clubId < MAX) {
+  if (club && club.name.length > 0) {
+    db.insertClub(club);
+    insertCount++;
     clubId++;
-    writeProgress(clubId, MAX);
-    dumpClubs(db, done);
-  } else {
-    console.log("\n");
+    dumpClubs(db, clubId, done);
+    writeProgress(insertCount);
+  } else if (failedStreak > 30) {
+    readline.clearLine(process.stdout, 0);
+    readline.cursorTo(process.stdout, 0, null);
     console.log("Done dumping clubs");
-    db.insertClubs(allClubs);
     done();
+  } else {
+    clubId++;
+    failedStreak++;
+    dumpClubs(db, clubId, done);
   }
 }
 
-function writeProgress(p: number, total: number) {
+function writeProgress(p: number) {
   readline.clearLine(process.stdout, 0);
   readline.cursorTo(process.stdout, 0, null);
-  let text = `Club dumping progress: ${p}/${total}`;
+  let text = `Club dumping progress: ${p}`;
   process.stdout.write(text);
 }

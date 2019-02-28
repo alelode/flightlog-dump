@@ -29,12 +29,10 @@ class Database {
     });
   }
 
-  insertClubs(clubs: Club[]) {
+  insertClub(club: Club) {
     this.db.serialize(() => {
       var stmt = this.db.prepare("INSERT INTO clubs VALUES (?,?)");
-      for (var club of clubs) {
-        stmt.run(club.id, club.name);
-      }
+      stmt.run(club.id, club.name);
       stmt.finalize();
     });
   }

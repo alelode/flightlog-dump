@@ -3,13 +3,15 @@ import { extractTakeOff } from "../htmlExtractor/htmlExtractor";
 import Database from "../db/database";
 import * as readline from "readline";
 
-let takeOffId = 1;
-let countryId = 1;
 const baseUrl = "https://flightlog.org/";
 let insertCount = 0;
 var failedStreak = 0;
 
-export async function dumpTakeOffs(db: Database, done: Function) {
+export async function dumpTakeOffs(
+  db: Database,
+  takeOffId: number,
+  done: Function
+) {
   const page = "fl.html?l=1&country_id=160&a=22&start_id=" + takeOffId;
   let html = await getHtml(baseUrl + page);
   var takeOff = extractTakeOff(html, takeOffId);
@@ -18,14 +20,15 @@ export async function dumpTakeOffs(db: Database, done: Function) {
     db.insertTakeOff(takeOff);
     insertCount++;
     takeOffId++;
-    dumpTakeOffs(db, done);
+    dumpTakeOffs(db, takeOffId, done);
     writeProgress(insertCount);
-  } else if (failedStreak > 20) {
+  } else if (failedStreak > 30) {
     console.log("Done dumping takeOffs");
     done();
   } else {
     takeOffId++;
-    dumpTakeOffs(db, done);
+    failedStreak++;
+    dumpTakeOffs(db, takeOffId, done);
   }
 }
 

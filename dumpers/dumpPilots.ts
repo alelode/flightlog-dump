@@ -4,33 +4,40 @@ import Database from "../db/database";
 import { Pilot } from "../types";
 import * as readline from "readline";
 
-let pilotId = 1;
 const baseUrl = "https://flightlog.org/";
+var insertCount = 0;
+var failedStreak = 0;
 
-const MAX = 15000;
-
-export async function dumpPilots(db: Database, done: Function) {
+export async function dumpPilots(
+  db: Database,
+  pilotId: number,
+  done: Function
+) {
   const page = "fl.html?l=1&a=28&user_id=" + pilotId;
   let html = await getHtml(baseUrl + page);
   var pilot = extractPilot(html, pilotId);
 
   if (pilot && pilot.name.length > 0) {
     db.insertPilot(pilot);
-  }
-
-  if (pilotId < MAX) {
     pilotId++;
-    dumpPilots(db, done);
-    writeProgress(pilotId, MAX);
-  } else {
+    insertCount++;
+    dumpPilots(db, pilotId, done);
+    writeProgress(insertCount);
+  } else if (failedStreak > 30) {
+    readline.clearLine(process.stdout, 0);
+    readline.cursorTo(process.stdout, 0, null);
     console.log("Done dumping pilots");
     done();
+  } else {
+    failedStreak++;
+    pilotId++;
+    dumpPilots(db, pilotId, done);
   }
 }
 
-function writeProgress(p: number, total: number) {
+function writeProgress(p: number) {
   readline.clearLine(process.stdout, 0);
   readline.cursorTo(process.stdout, 0, null);
-  let text = `Pilot dumping progress: ${p}/${total}`;
+  let text = `Pilot dumping progress: ${p}`;
   process.stdout.write(text);
 }

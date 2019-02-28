@@ -61,7 +61,7 @@ export function extractClub(html: string, clubId: number): Club {
       name: arr[3].textContent
     };
   } else {
-    throw "Could not fetch club name";
+    return null;
   }
 }
 

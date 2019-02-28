@@ -53,35 +53,43 @@ async function doCommand(db: Database, command: string): Promise<void> {
   switch (command) {
     case "1":
       console.log("Starting clubs dump...");
-      db.emptyTable("clubs");
-      dumpClubs(db, () => {
+
+      await db.getHighestIndex("clubs", id => {
         busy = false;
-        printInstructions();
-        return;
+        dumpClubs(db, id + 1, () => {
+          printInstructions();
+          return;
+        });
       });
       break;
     case "2":
       console.log("Starting pilots dump...");
-      dumpPilots(db, () => {
+      await db.getHighestIndex("pilots", id => {
         busy = false;
-        printInstructions();
-        return;
+        dumpPilots(db, id + 1, () => {
+          printInstructions();
+          return;
+        });
       });
       break;
     case "3":
       console.log("Starting flights dump....");
-      dumpFlights(db, () => {
+      await db.getHighestIndex("flights", id => {
         busy = false;
-        printInstructions();
-        return;
+        dumpFlights(db, id + 1, () => {
+          printInstructions();
+          return;
+        });
       });
       break;
     case "4":
       console.log("Starting takeoffs dump....");
-      dumpTakeOffs(db, () => {
+      await db.getHighestIndex("takeoffs", id => {
         busy = false;
-        printInstructions();
-        return;
+        dumpTakeOffs(db, id + 1, () => {
+          printInstructions();
+          return;
+        });
       });
       break;
     case "5":
