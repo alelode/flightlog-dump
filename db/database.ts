@@ -1,4 +1,4 @@
-import { Pilot, Club, Flight } from "../types";
+import { Pilot, Club, Flight, TakeOff } from "../types";
 
 const sqlite3 = require("sqlite3").verbose();
 
@@ -23,6 +23,9 @@ class Database {
         "CREATE TABLE IF NOT EXISTS pilots (id NUMBER, name TEXT, country NUMBER, club TEXT, license TEXT, wings TEXT)"
       );
       this.db.run("CREATE TABLE IF NOT EXISTS clubs (id NUMBER, name TEXT)");
+      this.db.run(
+        "CREATE TABLE IF NOT EXISTS takeoffs (id NUMBER, name TEXT, region TEXT, toptobottom NUMBER, asl NUMBER, description TEXT, directions TEXT)"
+      );
     });
   }
 
@@ -53,6 +56,23 @@ class Database {
     });
   }
 
+  insertTakeOff(takeoff: TakeOff) {
+    this.db.serialize(() => {
+      var stmt = this.db.prepare(
+        "INSERT INTO takeoffs (id, name, region, toptobottom, asl, description) VALUES (?,?,?,?,?,?)"
+      );
+      stmt.run(
+        takeoff.id,
+        takeoff.name,
+        takeoff.region,
+        takeoff.toptobottom,
+        takeoff.asl,
+        takeoff.description
+      );
+      stmt.finalize();
+    });
+  }
+
   insertFlight(flight: Flight) {
     this.db.serialize(() => {
       var stmt = this.db.prepare(
@@ -73,6 +93,17 @@ class Database {
         flight.trackloglink
       );
       stmt.finalize();
+    });
+  }
+
+  getHighestIndex(table: string, callback: (id: number) => void) {
+    this.db.get("SELECT MAX(id) from " + table, (err, row) => {
+      if (err) {
+        console.log(err);
+        return null;
+      } else {
+        callback(row["MAX(id)"]);
+      }
     });
   }
 

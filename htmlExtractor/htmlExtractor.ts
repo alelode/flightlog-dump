@@ -1,5 +1,5 @@
 import { JSDOM } from "jsdom";
-import { Flight, Pilot, Club } from "../types";
+import { Flight, Pilot, Club, TakeOff } from "../types";
 
 export function extractFlightUrls(html: string): string[] {
   const dom = new JSDOM(html);
@@ -136,6 +136,62 @@ function getRowData(row: Element) {
   }
 
   return row.children[1].textContent.trim();
+}
+
+export function extractTakeOff(html: string, id: number): TakeOff {
+  try {
+    const dom = new JSDOM(html);
+
+    let spans = Array.prototype.slice
+      .call(dom.window.document.getElementsByTagName("span"))
+      .filter(el => {
+        return el.style.backgroundColor === "rgb(211, 211, 211)";
+      });
+
+    var name = spans[3].textContent.replace("[", "").replace("]", "");
+
+    if (name.length > 0) {
+      let table = Array.prototype.slice
+        .call(dom.window.document.getElementsByTagName("table"))
+        .find(
+          (table: Element) =>
+            table.hasAttribute("cellpadding") &&
+            table.getAttribute("cellpadding") === "3"
+        );
+
+      if (!table) {
+        return null;
+      }
+
+      let arr: Element[] = Array.prototype.slice
+        .call(table.children[0].children)
+        .filter((row: Element) => {
+          return row.children && row.children.length === 2;
+        });
+
+      return {
+        id: id,
+        name: name,
+        region: getRowData(arr[0]),
+        asl: getRowData(arr[1])
+          ? parseInt(getRowData(arr[1]).split(" meters")[0])
+          : 0,
+        toptobottom:
+          getRowData(arr[1]).indexOf("bottom ") > -1
+            ? parseInt(
+                getRowData(arr[1])
+                  .split("bottom ")[1]
+                  .split(" meters")[0]
+              )
+            : 0,
+        description: getRowData(arr[3])
+      };
+    } else {
+      return null;
+    }
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 export function extractFlight(html: string, id: number): Flight {

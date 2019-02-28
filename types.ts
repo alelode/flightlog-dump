@@ -13,6 +13,15 @@ export interface Flight {
   trackloglink: string;
 }
 
+export interface TakeOff {
+  id: number;
+  name: string;
+  region: string;
+  toptobottom: number;
+  asl: number;
+  description: string;
+}
+
 export interface Club {
   name: string;
   id: number;
